@@ -1,16 +1,19 @@
 const express = require('express')
 const dotenv = require('dotenv').config()
-const path = require('path')
+const path = require('node:path');
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
+const { logger } = require('./middleware/logger')
+const errorHandler = require('./middleware/errorHandler')
+const corsOptions = require('./config/corsOptions')
 
 const port = process.env.PORT || 3500
 const app = express()
 
-app.use(cors())
+app.use(logger)
+app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
-
 app.use('/', express.static(path.join(__dirname, 'public')))
 app.use('/', require('./routes/root'))
 
@@ -25,6 +28,7 @@ app.all('*', (req, res) => {
     }
 })
 
+app.use(errorHandler)
 app.listen(port, () => console.log(`Server started with a port ${port}`))
 
  

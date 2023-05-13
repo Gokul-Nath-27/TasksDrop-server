@@ -1,5 +1,5 @@
 const express = require("express")
-const path = require("path")
+const path = require('node:path');
 const router = express.Router()
 
 router.get("^/$|/index(.html)?", (req, res) => {
