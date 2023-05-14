@@ -1,14 +1,16 @@
 const express = require('express')
-const dotenv = require('dotenv').config()
 const path = require('node:path');
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { logger } = require('./middleware/logger')
 const errorHandler = require('./middleware/errorHandler')
 const corsOptions = require('./config/corsOptions')
+require('dotenv').config()
 
 const port = process.env.PORT || 3500
 const app = express()
+
+console.log(process.env.NODE_ENV)
 
 app.use(logger)
 app.use(cors(corsOptions))
@@ -25,7 +27,7 @@ app.all('*', (req, res) => {
         res.json({message: '404 Not found'})
     } else{
         res.type('txt').send('404 NotFound')
-    }
+    } 
 })
 
 app.use(errorHandler)
