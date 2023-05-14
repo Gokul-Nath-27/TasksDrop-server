@@ -2,10 +2,14 @@ const express = require('express')
 const path = require('node:path');
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
-const { logger } = require('./middleware/logger')
 const errorHandler = require('./middleware/errorHandler')
-const corsOptions = require('./config/corsOptions')
+const { logger, logEvent } = require('./middleware/logger')
+const corsOptions = require('./config/corsOptions');
+const mongoose = require('mongoose');
 require('dotenv').config()
+
+// Functio call to connect mongoDB database
+require('./config/dbConn')()
 
 const port = process.env.PORT || 3500
 const app = express()
@@ -23,7 +27,7 @@ app.all('*', (req, res) => {
     res.status(404)
     if(req.accepts('html')){
         res.sendFile(path.join(__dirname, 'views', '404.html'))
-    } else if(req.accepts('json')){ 
+    } else if(req.accepts('json')){
         res.json({message: '404 Not found'})
     } else{
         res.type('txt').send('404 NotFound')
@@ -31,6 +35,11 @@ app.all('*', (req, res) => {
 })
 
 app.use(errorHandler)
-app.listen(port, () => console.log(`Server started with a port ${port}`))
 
- 
+mongoose.connection.once('open', () => {
+    app.listen(port, () => console.log(`Server started with a port ${port}`))
+})
+
+mongoose.connection.on('error', (err) => {
+    logEvent(`${err.errno}\t${err.code}\t${err.hostname}\t${err.syscall}`, 'mongoErrLog.log')
+})
