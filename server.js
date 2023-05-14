@@ -7,21 +7,32 @@ const { logger, logEvent } = require('./middleware/logger')
 const corsOptions = require('./config/corsOptions');
 const mongoose = require('mongoose');
 require('dotenv').config()
+const app = express()
 
-// Functio call to connect mongoDB database
+// Function call to connect mongoDB database
 require('./config/dbConn')()
 
 const port = process.env.PORT || 3500
-const app = express()
-
 console.log(process.env.NODE_ENV)
 
+// Middleware to the application
 app.use(logger)
+
 app.use(cors(corsOptions))
+
 app.use(express.json())
+
 app.use(cookieParser())
+
+// Routing in the application goes here.
+
 app.use('/', express.static(path.join(__dirname, 'public')))
+
 app.use('/', require('./routes/root'))
+
+app.use('/users', require('./routes/userRoute'))
+
+// Wrong Route Handling
 
 app.all('*', (req, res) => {
     res.status(404)
@@ -35,6 +46,8 @@ app.all('*', (req, res) => {
 })
 
 app.use(errorHandler)
+
+// Connect to MongoDB and Starting up the server
 
 mongoose.connection.once('open', () => {
     app.listen(port, () => console.log(`Server started with a port ${port}`))
