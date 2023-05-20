@@ -8,7 +8,9 @@ const bcrypt = require('bcrypt')
 // @access Private
 const getAllUsers = asyncHandler( async (req, res) => {
     const users = await User.find().select('-password').lean()
+
     if(!users.length) return res.status(400).json({message: 'No users found🙄'})
+
     res.json(users)
 })
 
@@ -24,7 +26,7 @@ const createNewUser = asyncHandler( async (req, res) => {
     }
 
     // Cheking for duplicates
-    const duplicate = await User.findOne({username}).lean().exec()
+    const duplicate = await User.findOne({username}).lean().exec() // .lean() will convert mongoDB returned document which has all the methods associated with it, to basic json object.
     if(duplicate) return res.status(409).json({message: 'Username Already Exits!😔'})
 
     // hashing the Password
@@ -54,27 +56,30 @@ const updateUser = asyncHandler( async (req, res) => {
         return res.status(400).json({message: 'All fields are required😒'})
     }
     
+    // we are using exec() method because we querying by the value 'id'. exec will return a PROMISE
     const user = await User.findById(id).exec()
 
     if(!user) return res.status(400).json({message: 'User not found🛸'})
 
     // Cheking for duplicates
-    const duplicate = await User.findOne({ username }).lean().exec()
+    const duplicate = await User.findOne({ username }).select('-password').lean().exec()
 
     // Allow updates to the original user
     if(duplicate?._id.toString() !== id){
-        return res.status(409).json({message: 'This Username Already Exits!😔'})
+        return res.status(409).json({message: 'Username Conflict👀'})
     } 
 
     user.username = username
     user.roles = roles
     user.jobStatus = jobStatus
 
+    // if the user wants to update the password too then this will run
     if(password){
         // Hashing the Password
         user.password = await bcrypt.hash(password, 10) // 10 -> which is salt
     }
 
+    // if we have used lean() method in line 60, then we wouldn't be able to access the save() method below.
     const updatedUser = await user.save()
 
     res.json({message: `${updatedUser.username} updated😎`})
@@ -86,10 +91,10 @@ const updateUser = asyncHandler( async (req, res) => {
 const deleteUser = asyncHandler( async (req, res) => {
 
     const { id } = req.body
-    console.log(id)
     
     if(!id) return res.status(400).json({message: 'ID is required👾'})
 
+    // if the user is assigned with some tasks then we don't want to delete the user.
     const task = await Task.findOne({user: id}).lean().exec()
 
     if(task){
