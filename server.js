@@ -32,6 +32,8 @@ app.use('/', require('./routes/root'))
 
 app.use('/users', require('./routes/userRoute'))
 
+app.use('/tasks', require('./routes/taskRoute'))
+
 // Wrong Route Handling
 
 app.all('*', (req, res) => {
